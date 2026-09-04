@@ -1,7 +1,7 @@
 #include "Playables.h"
 #include <iostream>
-#include <algorithm> // Required for std::clamp
-#include <cmath>     // For other math functions like std::sqrt, std::sin
+#include <algorithm> 
+#include <cmath>     
 #include <godot_cpp/core/object.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
@@ -389,7 +389,7 @@ void Playables::_input(const Ref<InputEvent>& event)
 		{
 			Vector3 current_rotation = Cam->get_rotation();
 			float new_x = std::clamp(
-				(current_rotation.x - ((lookInput.y * MouseSens) / 1000)),
+				((float)current_rotation.x - ((lookInput.y * MouseSens) / 1000)),
 				(float)Math::deg_to_rad(-90.0),
 				(float)Math::deg_to_rad(90.0)
 			);
