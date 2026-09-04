@@ -388,8 +388,9 @@ void Playables::_input(const Ref<InputEvent>& event)
 		if (Cam != nullptr)
 		{
 			Vector3 current_rotation = Cam->get_rotation();
+			float rotx = (float)current_rotation.x;
 			float new_x = std::clamp(
-				((float)current_rotation.x - ((lookInput.y * MouseSens) / 1000)),
+				(rotx - ((lookInput.y * MouseSens) / 1000)),
 				(float)Math::deg_to_rad(-90.0),
 				(float)Math::deg_to_rad(90.0)
 			);
