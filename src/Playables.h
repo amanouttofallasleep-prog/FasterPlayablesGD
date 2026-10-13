@@ -1,10 +1,10 @@
 	#ifndef PLAYABLES_H
 	#define PLAYABLES_H
 
-	#define CFLAG 1
-	#define JFLAG 2
-	#define SFLAG 4
-	#define CUSTOMFLAG1 8
+	#define CFLAG 1				//Crouch Flag
+	#define JFLAG 2				//Jump Flag
+	#define SFLAG 4				//Sprint Flagg
+	#define CUSTOMFLAG1 8		//The next flags are just whatever inputs i wanna add later
 	#define CUSTOMFLAG2 16
 	#define CUSTOMFLAG3 32
 	#define CUSTOMFLAG4 64
@@ -236,11 +236,17 @@
 			Area3D* CrouchChecking = nullptr;
 			NodePath CheckerAreaPath;
 
-			Timer* JumpTimer = nullptr;
+			//BIND_GETSET(float, MaxDashClamp, 100.0 / 3.6);
+			BIND_GETSET(Timer*, JumpTimer, nullptr);
+			BIND_GETSET(Timer*, DashTimer, nullptr);
+			BIND_GETSET(Timer*, InputBuffer, nullptr);
+			BIND_GETSET(Timer*, CoyoteBuffer, nullptr);
+			BIND_GETSET(Timer*, MaxDashTimer, nullptr);
+			/*Timer* JumpTimer = nullptr;
 			Timer* DashTimer = nullptr;
 			Timer* InputBuffer = nullptr;
 			Timer* CoyoteBuffer = nullptr;
-			Timer* MaxDashTimer = nullptr;
+			Timer* MaxDashTimer = nullptr;*/
 
 			static void _bind_methods();
 
@@ -641,6 +647,7 @@
 			inline float VELMAG() const { return get_velocity().length(); }
 			inline Vector3 VEL() const { return get_velocity(); }
 			void UpdateCapsuleSize();
+
 
 
 	#pragma endregion

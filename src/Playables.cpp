@@ -48,11 +48,17 @@ void Playables::_bind_methods()
 	ADD_SIGNAL(MethodInfo("OnShotRequested", PropertyInfo(Variant::FLOAT, "ApproxTime")));
 	ADD_SIGNAL(MethodInfo("OnJumpComplete"));
 	ADD_SIGNAL(MethodInfo("OnDashComplete"));
+	ADD_SIGNAL(MethodInfo("OnBounce"));
 
 
 	BIND_PROP(Playables, Variant::FLOAT, MaxDashClamp);
 	BIND_PROP(Playables, Variant::NODE_PATH, GroundCheckRayPath);
 	BIND_PROP(Playables, Variant::NODE_PATH, CheckerAreaPath);
+	BIND_PROP(Playables, Variant::OBJECT, JumpTimer);
+	BIND_PROP(Playables, Variant::OBJECT, DashTimer);
+	BIND_PROP(Playables, Variant::OBJECT, InputBuffer);
+	BIND_PROP(Playables, Variant::OBJECT, CoyoteBuffer);
+	BIND_PROP(Playables, Variant::OBJECT, MaxDashTimer);
 	BIND_PROP(Playables, Variant::FLOAT, defaultFOV);
 	BIND_PROP(Playables, Variant::FLOAT, DefaultSlopeAngle);
 	BIND_PROP(Playables, Variant::FLOAT, AbsoluteMaxAllowedSlopeAngle);
@@ -107,6 +113,8 @@ void Playables::_bind_methods()
 
 	ClassDB::bind_method(D_METHOD("GetCapPath"), &Playables::GetCapPath);
 	ClassDB::bind_method(D_METHOD("SetCapPath", "p_path"), &Playables::SetCapPath);
+
+
 
 	ClassDB::bind_method(D_METHOD("SetInputDirection", "inDirection"), &Playables::SetInputDirection);
 	ClassDB::bind_method(D_METHOD("GetInputDirection"), &Playables::GetInputDirection);
@@ -712,9 +720,9 @@ void Playables::SlidingTick(float delta, int iteration)
 		{
 			set_velocity(GetMirroredVector(vel, get_last_slide_collision()->get_normal()));
 			ScreenShakeBRIDGE(Size2D(VEL()) * BounceCameraShakeFactor + LandShakeIntensity, LandShakeTime + Size2D(VEL()) * 0.001);
-
+			emit_signal("OnBounce"); 
 			CanCoyoteTimeJump = true;
-			//UtilityFunctions::print("called"); 
+
 		}
 
 		if (!PrevFloor && is_on_floor())
