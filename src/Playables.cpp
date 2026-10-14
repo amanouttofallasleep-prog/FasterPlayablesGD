@@ -77,6 +77,16 @@ void Playables::_bind_methods()
 	BIND_PROP(Playables, Variant::FLOAT, BounceCameraShakeFactor);
 	BIND_PROP(Playables, Variant::FLOAT, ShakeClamp);
 
+	BIND_PROP(Playables, Variant::INT, CoyoteSlideRefreshCnt);
+	BIND_PROP(Playables, Variant::BOOL, BufferingJump);
+	BIND_PROP(Playables, Variant::BOOL, BufferingDash);
+	BIND_PROP(Playables, Variant::BOOL, CoyoteTimeActive);
+	BIND_PROP(Playables, Variant::BOOL, CanCoyoteTimeJump);
+	BIND_PROP(Playables, Variant::BOOL, MaxDashActive);
+	BIND_PROP(Playables, Variant::BOOL, PrevFloor);
+	BIND_PROP(Playables, Variant::FLOAT, MaxDashStrength);
+
+
 	BIND_VIRTUAL_2(Playables, ScreenShake, FLOAT, intensity, FLOAT, time);
 
 

@@ -47,7 +47,7 @@
 	};
 	using namespace godot;
 
-	// MAGIC NUMBERS
+	// MAGIC NUMBERS straiiiiight from ue4
 	const float MAX_STEP_SIDE_Z = 0.08f;	// maximum z value for the normal on the vertical side of steps
 	const float SWIMBOBSPEED = -80.f;
 	const float VERTICAL_SLOPE_NORMAL_Z = 0.001f; // Slope is vertical if Abs(Normal.Z) <= this threshold. Accounts for precision problems that sometimes angle normals slightly off horizontal for vertical surface.
@@ -295,15 +295,26 @@
 
 			Vector3 LastWallNormal;
 			float LastYTouchedWall;
+			//BIND_GETSET(Timer*, MaxDashTimer, nullptr);
 
-			int CoyoteSlideRefreshCnt = 0;
-			bool BufferingJump = false;
-			bool BufferingDash = false;
-			bool CoyoteTimeActive = false;
-			bool CanCoyoteTimeJump = false;
-			bool MaxDashActive = false;
-			bool PrevFloor = false;
-			float MaxDashStrength = 0;
+
+			BIND_GETSET(int, CoyoteSlideRefreshCnt, 0);
+			BIND_GETSET(bool, BufferingJump, false);
+			BIND_GETSET(bool, BufferingDash, false);
+			BIND_GETSET(bool, CoyoteTimeActive, false);
+			BIND_GETSET(bool, CanCoyoteTimeJump, false);
+			BIND_GETSET(bool, MaxDashActive, false);
+			BIND_GETSET(bool, PrevFloor, false);
+			BIND_GETSET(float, MaxDashStrength, false);
+
+			//int CoyoteSlideRefreshCnt = 0;
+			//bool BufferingJump = false;
+			//bool BufferingDash = false;
+			//bool CoyoteTimeActive = false;
+			//bool CanCoyoteTimeJump = false;
+			//bool MaxDashActive = false;
+			//bool PrevFloor = false;
+			//float MaxDashStrength = 0;
 
 			float currFriction = 0;
 
@@ -597,9 +608,6 @@
 			////////////////////////////////////////////////////////////////////////////////////////
 			void SetGravity(float newVal) { Gravity = newVal; }
 			float GetGravity() { return Gravity; } 
-
-			void SetCoyoteTimeActive(bool newVal) { CoyoteTimeActive = newVal; }
-			bool GetCoyoteTimeActive() { return CoyoteTimeActive; }
 
 			void SetDeceleration(float newVal) { Deceleration = newVal; }
 			float GetDeceleration() { return Deceleration; }
