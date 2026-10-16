@@ -85,9 +85,13 @@ void Playables::_bind_methods()
 	BIND_PROP(Playables, Variant::BOOL, MaxDashActive);
 	BIND_PROP(Playables, Variant::BOOL, PrevFloor);
 	BIND_PROP(Playables, Variant::FLOAT, MaxDashStrength);
+	BIND_PROP(Playables, Variant::PACKED_VECTOR2_ARRAY, RotationReplayArr);
+	BIND_PROP(Playables, Variant::PACKED_VECTOR3_ARRAY, PositionReplayArr);
 
 
 	BIND_VIRTUAL_2(Playables, ScreenShake, FLOAT, intensity, FLOAT, time);
+
+	ClassDB::bind_method(D_METHOD("ClearChargeAction"), &Playables::ClearChargeAction);
 
 
 	BIND_SIG(val, BOOL, CustomFlagValSwitched1)
@@ -110,7 +114,7 @@ void Playables::_bind_methods()
 		ClassDB::bind_method(D_METHOD("SetCustomFlag5", "newVal"), &Playables::SetCustomFlag5);
 	ClassDB::bind_method(D_METHOD("IsCustomFlag5"), &Playables::IsCustomFlag5);
 
-	ClassDB::bind_method(D_METHOD("ReplayToDict"), &Playables::ReplayToDict);
+	//ClassDB::bind_method(D_METHOD("ReplayToDict"), &Playables::ReplayToDict);
 
 
 	ClassDB::bind_method(D_METHOD("SetMaxWalkSpeed", "speed"), &Playables::SetMaxWalkSpeed);
@@ -530,11 +534,8 @@ void Playables::PhysTick(float delta, int iteration)
 	{
 		Vector3 CamRot = Cam->get_rotation();
 
-		ReplayFrame NewFrame;
-		NewFrame.Pos = get_global_position();
-		NewFrame.Rot = Vector2(CamRot.x, CamRot.y); // x is pitch, y is yaw
-
-		Replay.push_back(NewFrame);
+		PositionReplayArr.append(get_global_position());
+		RotationReplayArr.append(Vector2(CamRot.x, CamRot.y)); // x is pitch, y is yaw
 	}
 
 	UpdateCharacterStateBeforeMovementBRIDGE(delta);
@@ -1122,26 +1123,26 @@ void Playables::BufferStanding()
 	canStand = CanStand;
 }
 
-Dictionary Playables::ReplayToDict()
-{
-	Dictionary MetaReplay;
-	MetaReplay["version"] = 1;
-	MetaReplay["final_time"] = (float)(Replay.size() / 60);
-	MetaReplay["seed"] = noise->get_seed();
-
-	Array SavedReplay;
-	for (const ReplayFrame& ReplayFrame : Replay) {
-		Dictionary SavedFrame;
-		SavedFrame["pos"] = ReplayFrame.Pos;
-		SavedFrame["rot"] = ReplayFrame.Rot;
-		SavedReplay.append(SavedFrame);
-	}
-
-	MetaReplay["frames"] = SavedReplay;
-
-	Replay.clear(); 
-	return MetaReplay;
-}
+//Dictionary Playables::ReplayToDict()
+//{
+//	Dictionary MetaReplay;
+//	MetaReplay["version"] = 1;
+//	MetaReplay["final_time"] = (float)(Replay.size() / 60);
+//	MetaReplay["seed"] = noise->get_seed();
+//
+//	Array SavedReplay;
+//	for (const ReplayFrame& ReplayFrame : Replay) {
+//		Dictionary SavedFrame;
+//		SavedFrame["pos"] = ReplayFrame.Pos;
+//		SavedFrame["rot"] = ReplayFrame.Rot;
+//		SavedReplay.append(SavedFrame);
+//	}
+//
+//	MetaReplay["frames"] = SavedReplay;
+//
+//	Replay.clear(); 
+//	return MetaReplay;
+//}
 
 Vector3 Playables::ApproxProjectile(Vector3 Accel, Vector3 Vel, Vector3 Pos, int iterCount, float MaxTime, float BulletSpeed)
 {
