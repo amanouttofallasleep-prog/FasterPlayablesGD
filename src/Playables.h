@@ -132,7 +132,7 @@
 			float JumpPower = 15.; 
 
 			//the maximum actual power you are able to jump OR dash 
-			Vector2 JumpClamps = Vector2(0.0, 15.0); 
+			Vector2 JumpClamps = Vector2(0.0, 15.0);
 
 			//The control the player while falling
 			float AirControlFactor = 0.5;
@@ -164,6 +164,12 @@
 			//The max speed to get the full fov increase
 			BIND_GETSET(float, FOVVelCap, 100 / 3.6); 
 			//float FOVVelCap = 27.77; 
+			
+			BIND_GETSET(float, PitchJumpConstraint, 0.8);	//refers to the pitch to consume higher jumps
+			BIND_GETSET(float, BaseJumpHeightGround, 6);	// refers to the base jump height when jumping
+			BIND_GETSET(float, BaseJumpHeightWallV, 6);		// refers to the verticle component of wall jumpnig
+			BIND_GETSET(float, BaseJumpHeightWallH, 6);		// referse to the horizontal component of wall jumping
+
 
 			//the maximum actual power you are able to jump OR dash 
 			//float MaxDashClamp = 100/3.6; 
@@ -323,6 +329,10 @@
 			//float CrouchBlendTime = 0;
 
 			bool canStand = true; 
+			// only refreshes on the ground
+			// lower priority than coyote time (CoyoteTime gets consumed first before this)
+			// can only be consumed in Mid-air
+			BIND_GETSET(bool, CanMidAirDash, true);
 
 
 	#pragma endregion
@@ -351,7 +361,7 @@
 
 			//The Camera lwerp 
 			float OffsetLerpBackFactor = 10.5; 
-
+			//this is a comment
 			//
 			BIND_GETSET(float, defaultFOV, 90); 
 			//float defaultFOV = 90;
@@ -368,6 +378,7 @@
 			//Vector<ReplayFrame> Replay;
 			//Array RecdPos; 
 			//Array RectRot; 
+
 			BIND_GETSET(TypedArray<Vector2>, RotationReplayArr, TypedArray<Vector2>());
 			BIND_GETSET(TypedArray<Vector3>, PositionReplayArr, TypedArray<Vector3>());
 	#pragma endregion
@@ -554,7 +565,7 @@
 			bool WasCrouching() { return (PrevInputFlags & CFLAG) != 0; }
 
 			void SetJumpFlag(bool newVal) {
-				if (newVal != IsJumping()) SetUpJumpTimer(newVal);
+				/*if (newVal != IsJumping()) */SetUpJumpTimer(newVal);
 				InputFlags = newVal ? InputFlags | JFLAG : InputFlags & ~(JFLAG);
 			}
 			bool IsJumping() { return (InputFlags & JFLAG) != 0; }

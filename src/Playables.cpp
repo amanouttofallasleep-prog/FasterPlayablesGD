@@ -88,6 +88,12 @@ void Playables::_bind_methods()
 	BIND_PROP(Playables, Variant::PACKED_VECTOR2_ARRAY, RotationReplayArr);
 	BIND_PROP(Playables, Variant::PACKED_VECTOR3_ARRAY, PositionReplayArr);
 
+	BIND_PROP(Playables, Variant::FLOAT, PitchJumpConstraint);
+	BIND_PROP(Playables, Variant::FLOAT, BaseJumpHeightGround);
+	BIND_PROP(Playables, Variant::FLOAT, BaseJumpHeightWallV);
+	BIND_PROP(Playables, Variant::FLOAT, BaseJumpHeightWallH);
+	BIND_PROP(Playables, Variant::BOOL, CanMidAirDash);
+
 
 	BIND_VIRTUAL_2(Playables, ScreenShake, FLOAT, intensity, FLOAT, time);
 
@@ -291,7 +297,7 @@ void Playables::_bind_methods()
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "JumpPower"), "SetJumpPower", "GetJumpPower");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "MaxDashTime"), "SetMaxDashTime", "GetMaxDashTime");
 
-
+	//test
 	ADD_SUBGROUP("Slide", "slide_");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "SlideGravity"), "SetSlideGravity", "GetSlideGravity");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "SlideFloorGravityInfluence"), "SetSlideFloorGravityInfluence", "GetSlideFloorGravityInfluence");
@@ -653,9 +659,10 @@ void Playables::FallingTick(float delta, int iteration)
 		float timeTick = GetSimulationTimeStep(remainingTime, iteration);
 		remainingTime -= timeTick;
 		Vector3 vel = VEL();
-		if (!InputDirection.is_zero_approx() /*&& !(vel.length() >= (IsSprinting() || VELMAG() > MaxRunSpeed ? MaxRunSpeed : MaxWalkSpeed))*/)
+		if (!InputDirection.is_zero_approx())
 		{
-			vel += RelativeInputDirection.normalized() * timeTick * AirControlFactor * (IsCrouching() ? MaxCrouchSpeed : MaxWalkSpeed);
+			vel += RelativeInputDirection.normalized() * timeTick * (AirControlFactor) * (IsCrouching() ? MaxCrouchSpeed : MaxWalkSpeed);
+			//vel = vel.length() > VELMAG() && Size2D(vel) > MaxWalkSpeed ? VEL() : vel; //clamping down velocity so that it doesn't go over walk speed in midair
 		}
 
 		//fluid braking 
@@ -844,10 +851,9 @@ void Playables::OnMovementModeChanged(int PreviousMovementModeINT)
 	switch (MovementMode)
 	{
 	case Walking:
-		//UtilityFunctions::print("Walking");
+		CanMidAirDash = true; 
 		break;
 	case Sliding:
-		//UtilityFunctions::print("Sliding");
 		break;
 	case WallRunning:
 		break;
@@ -984,6 +990,8 @@ void Playables::init()
 	MaxDashTimer->set_one_shot(true);
 	ActiveShakeTimer->set_one_shot(true);
 
+	JumpTimer->set_autostart(true); 
+
 	JumpTimer->set_wait_time(ChargeIncrements);
 	DashTimer->set_wait_time(ChargeIncrements);
 	InputBuffer->set_wait_time(BufferTime);
@@ -1042,10 +1050,10 @@ void Playables::init()
 
 void Playables::SetUpJumpTimer(bool isStart)
 {
-	if (isStart)
-		JumpTimer->start();
-	else
-		JumpTimer->stop();
+	//if (isStart)
+		//JumpTimer->start();
+	//else
+	//	JumpTimer->stop();
 
 	//UtilityFunctions::print("JumpIn");
 
@@ -1396,12 +1404,14 @@ bool Playables::CheckToJump()
 
 	if (CheckCanDash())//Dash Inputted
 	{
-		if (is_on_floor() || CoyoteTimeActive || MovementMode == EMovementMode::WallRunning)//(CurrentFloor.bBlockingHit || CoyoteTimeActive || IsCustomMovementMode(ECustomMovementMode::CMOVE_WallRun))
+		if (is_on_floor() || (CanMidAirDash || CoyoteTimeActive) || MovementMode == EMovementMode::WallRunning)//(CurrentFloor.bBlockingHit || CoyoteTimeActive || IsCustomMovementMode(ECustomMovementMode::CMOVE_WallRun))
 		{
 			float BufferedDashValue = VELMAG(); //Velocity.Size()
 
 			if (MovementMode != EMovementMode::WallRunning)//(!IsCustomMovementMode(ECustomMovementMode::CMOVE_WallRun)) //dash on floor or during coyote time
 			{
+				CanMidAirDash = !CoyoteTimeActive && CanMidAirDash && !is_on_floor() ? false : CanMidAirDash;	// can only be consumed if we don't have coyote Time anymore
+				CoyoteTimeActive =  CoyoteTimeActive && !is_on_floor() ?  false : CoyoteTimeActive;				// consumed when not on the ground
 				OnGroundDashBRIDGE();
 			}
 			else //dash on wall
@@ -1479,29 +1489,43 @@ void Playables::OnWallDash()
 void Playables::OnGroundJump()
 {
 	Vector3 floorNorm = get_floor_normal().is_normalized() ? get_floor_normal() : UPWARDS;
-	float HoldTime = GetCharge(false) * 0.1; //(CustomMovementFlags & 15) * 0.1;
+	float HoldTime = GetCharge(false) * 0.1f;												//(CustomMovementFlags & 15) * 0.1;
+	float lookPower = getForwardDir().normalized().dot(floorNorm);							//gets the dot product between the floor and the look direction of the cam. 
+	lookPower = CLAMP(CLAMP(lookPower, 0.0f, PitchJumpConstraint) * 1.5/PitchJumpConstraint, 0.0f, HoldTime); //maps the range between 0 and current hold time. 
 	Vector3 Vel = VEL();
-	Vel.y = !is_on_floor()
-		? CLAMP((float)Vel.y, 0.0f, VELMAG())
-		: CLAMP((float)Vel.slide(floorNorm).y, 0.0f, VELMAG());
-	Vel += is_on_floor()
-		? floorNorm * CLAMP((CLAMP(HoldTime, 0.0f, 1.5f) + 0.4) * JumpPower, (double)JumpClamps.x, (double)JumpClamps.y)
-		: CLAMP((CLAMP(HoldTime, 0.0f, 1.5f) + 0.4f) * JumpPower, (float)JumpClamps.x, (float)JumpClamps.y) * UPWARDS + DOWNWARDS * JumpPower * 0.25f * CoyoteSlideRefreshCnt;
 
-	if (!is_on_floor()) CoyoteSlideRefreshCnt++;
+	Vel.y = !is_on_floor()
+		? CLAMP((float)Vel.y, 0.0f, VELMAG())					// if not on floor case we just let the player jump as if the floor was facing up
+		: CLAMP((float)Vel.slide(floorNorm).y, 0.0f, VELMAG());	//if on floor we use the floor to influence the up speed of the player. 
+
+	Vel += is_on_floor()
+																//in this case if we're on the floor we'll jump and apply the force in the floor normal
+		? floorNorm * CLAMP((CLAMP(lookPower, 0.0f, 1.5f)) * JumpPower + BaseJumpHeightGround, (float)JumpClamps.x, (float)JumpClamps.y)
+																//in this case if we're not on the floor we'll jump as if the normal was just straight up
+		: CLAMP((CLAMP(lookPower, 0.0f, 1.5f)) * JumpPower + BaseJumpHeightGround, (float)JumpClamps.x, (float)JumpClamps.y) * UPWARDS + DOWNWARDS * JumpPower * 0.25f * CoyoteSlideRefreshCnt;
+
+	if (!is_on_floor()) CoyoteSlideRefreshCnt++;				//this decreases the coyote time, we use this to make sure people can't just have infinite jumps
 
 	set_velocity(Vel); //kill me 
+	ChargeFlags -= lookPower * 10;
+
 }
 
 void Playables::OnWallJump()
 {
-	float HoldTime = GetCharge(false) * 0.1;//(CustomMovementFlags & 15) * 0.1;
+	float HoldTime = GetCharge(false) * 0.1;	//(CustomMovementFlags & 15) * 0.1;
+	float lookPower = getForwardDir().normalized().dot(UPWARDS); //gets the dot product between UpVector and the look direction of the cam. 
+	lookPower = CLAMP(CLAMP(lookPower, 0.0f, PitchJumpConstraint) * 1.5 / PitchJumpConstraint, 0.0f, lookPower); //maps the range between 0 and current hold time. 
+
 	Vector3 Vel = VEL();
 
+	//upwards vel
 	Vel.y = Vel.y < 0 ? 0 : Vel.y; //Velocity.Z = Velocity.Z < 0 ? 0 : Velocity.Z;
-	Vel += (get_wall_normal().slide(UPWARDS) * JumpPower * ((CLAMP(HoldTime, 0.0f, 1.5f) + 0.2f) * VerticalWallJumpMultiplier)	//sidewards vel
-		+ (UPWARDS * (CLAMP(HoldTime, 0.0f, 1.5f) * LateralWallJumpMultiplier) * JumpPower));									//upwards vel
-	set_velocity(Vel); //kill me 
+	Vel += (get_wall_normal().slide(UPWARDS) * JumpPower * ((CLAMP(lookPower, 0.0f, 1.5f) + 0.2f) * VerticalWallJumpMultiplier)	//sidewards vel
+		+ (UPWARDS * (CLAMP(lookPower, 0.0f, 1.5f) * LateralWallJumpMultiplier) * JumpPower));
+
+	set_velocity(Vel); //kill me sorry I mean applies the speed
+	ChargeFlags -= lookPower * 10;
 	SetMovementMode(Falling);
 }
 
@@ -1528,7 +1552,7 @@ void Playables::OnJumpDone()
 				GetWorld()->GetTimerManager().ClearTimer(Safe_JumpInputBuffer);*/
 		ScreenShakeBRIDGE(VELMAG() * GetCharge(false) * .005 + ChargeActionShakeIntensity, ChargeActionShakeTime + VELMAG() * GetCharge(false) * .0005);
 		MaxDashStrength = VELMAG();
-		ChargeFlags &= 240;
+		//ChargeFlags &= 240;
 		CoyoteTimeActive = false;
 		BufferingJump = false;
 		CanCoyoteTimeJump = false;
@@ -1576,8 +1600,9 @@ void Playables::OnDashDone()
 		//}
 	ScreenShakeBRIDGE(VELMAG() * GetCharge(true) * .005 + ChargeActionShakeIntensity, ChargeActionShakeTime + VELMAG() * GetCharge(true) * .0005);
 	MaxDashStrength = VELMAG();
-	CanCoyoteTimeJump = false;
-	CoyoteTimeActive = false;
+	MaxDashTimer->start();
+	MaxDashActive = true; 
+	/*CoyoteTimeActive = false;*/ //moved to The Check
 	ChargeFlags &= 15;
 	BufferingDash = false;
 }
