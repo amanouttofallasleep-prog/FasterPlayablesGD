@@ -248,6 +248,7 @@
 			BIND_GETSET(Timer*, InputBuffer, nullptr);
 			BIND_GETSET(Timer*, CoyoteBuffer, nullptr);
 			BIND_GETSET(Timer*, MaxDashTimer, nullptr);
+			BIND_GETSET(Timer*, BounceBuffer, nullptr);
 			/*Timer* JumpTimer = nullptr;
 			Timer* DashTimer = nullptr;
 			Timer* InputBuffer = nullptr;
@@ -333,6 +334,14 @@
 			// lower priority than coyote time (CoyoteTime gets consumed first before this)
 			// can only be consumed in Mid-air
 			BIND_GETSET(bool, CanMidAirDash, true);
+			//Activates When you start sliding and will stay for another 0.3 second
+			//Disables after the following
+			//	after One bounce
+			//	after you uncrouch 
+			//	after enough time has passed
+			//BIND_GETSET(bool, WillBounce, false);
+			BIND_GETSET(float, BounceBufferTime, 0.1);
+			//this will be user setable in game too 
 
 
 	#pragma endregion

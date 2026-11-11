@@ -93,6 +93,7 @@ void Playables::_bind_methods()
 	BIND_PROP(Playables, Variant::FLOAT, BaseJumpHeightWallV);
 	BIND_PROP(Playables, Variant::FLOAT, BaseJumpHeightWallH);
 	BIND_PROP(Playables, Variant::BOOL, CanMidAirDash);
+	BIND_PROP(Playables, Variant::FLOAT, BounceBufferTime);
 
 
 	BIND_VIRTUAL_2(Playables, ScreenShake, FLOAT, intensity, FLOAT, time);
@@ -734,7 +735,12 @@ void Playables::SlidingTick(float delta, int iteration)
 		//	//UtilityFunctions::print("called"); 
 		//}
 
-		if (get_last_slide_collision().is_valid() && vel.dot(get_last_slide_collision()->get_normal()) < -0.5 && UPWARDS.dot(get_last_slide_collision()->get_normal()) < 0.7)
+		if	(
+			(!BounceBuffer->is_stopped())
+			&& get_last_slide_collision().is_valid()							// we hit something
+			&& vel.dot(get_last_slide_collision()->get_normal()) < -0.3		// moving into the thing
+			&& UPWARDS.dot(get_last_slide_collision()->get_normal()) < 0.8	// we ain't hitting something facing up
+			)
 		{
 			set_velocity(GetMirroredVector(vel, get_last_slide_collision()->get_normal()));
 			ScreenShakeBRIDGE(Size2D(VEL()) * BounceCameraShakeFactor + LandShakeIntensity, LandShakeTime + Size2D(VEL()) * 0.001);
@@ -742,6 +748,8 @@ void Playables::SlidingTick(float delta, int iteration)
 			CanCoyoteTimeJump = true;
 
 		}
+
+
 
 		if (!PrevFloor && is_on_floor())
 		{
@@ -851,9 +859,27 @@ void Playables::OnMovementModeChanged(int PreviousMovementModeINT)
 	switch (MovementMode)
 	{
 	case Walking:
-		CanMidAirDash = true; 
+		CanMidAirDash = true;
 		break;
 	case Sliding:
+		BounceBuffer->start(BounceBufferTime);
+		break;
+	case WallRunning:
+		break;
+	case Falling:
+		break;
+	case None:
+		break;
+	default:
+		break;
+	}
+
+	switch (PreviousMovementMode)
+	{
+	case Walking:
+		break;
+	case Sliding:
+		BounceBuffer->stop(); 
 		break;
 	case WallRunning:
 		break;
@@ -982,6 +1008,7 @@ void Playables::init()
 	CoyoteBuffer = memnew(Timer);
 	MaxDashTimer = memnew(Timer);
 	ActiveShakeTimer = memnew(Timer);
+	BounceBuffer = memnew(Timer);
 
 	JumpTimer->set_one_shot(false);
 	DashTimer->set_one_shot(false);
@@ -989,6 +1016,7 @@ void Playables::init()
 	CoyoteBuffer->set_one_shot(true);
 	MaxDashTimer->set_one_shot(true);
 	ActiveShakeTimer->set_one_shot(true);
+	BounceBuffer->set_one_shot(true);
 
 	JumpTimer->set_autostart(true); 
 
@@ -1008,6 +1036,7 @@ void Playables::init()
 	ActiveShakeTimer->connect("timeout", Callable(this, "ActiveShakeTimerCall"));
 
 	add_child(JumpTimer);
+	add_child(BounceBuffer);
 	add_child(DashTimer);
 	add_child(InputBuffer);
 	add_child(CoyoteBuffer);
@@ -1306,6 +1335,7 @@ void Playables::UpdateCapsuleSize()
 			if (MovementMode == EMovementMode::Walking) 
 				set_global_position(get_global_position() + UPWARDS * (defaultHeight - CrouchHeight) / 2);
 			emit_signal("OnUnCrouchAnim");
+			
 			CapsuleBody->set_height(defaultHeight); //Disables Collision then changes the height of the characcter
 			return;
 		}
