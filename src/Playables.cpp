@@ -526,7 +526,6 @@ bool Playables::IsPlayerFreeDashing()
 
 Vector3 Playables::getForwardDir() const
 {
-
 	return Cam ? -(Cam->get_global_basis().get_column(2)) : Vector3();
 }
 #pragma endregion
@@ -1550,8 +1549,8 @@ void Playables::OnWallJump()
 
 	//upwards vel
 	Vel.y = Vel.y < 0 ? 0 : Vel.y; //Velocity.Z = Velocity.Z < 0 ? 0 : Velocity.Z;
-	Vel += (get_wall_normal().slide(UPWARDS) * JumpPower * ((CLAMP(lookPower, 0.0f, 1.5f) + 0.2f) * VerticalWallJumpMultiplier)	//sidewards vel
-		+ (UPWARDS * (CLAMP(lookPower, 0.0f, 1.5f) * LateralWallJumpMultiplier) * JumpPower));
+	Vel += (get_wall_normal().slide(UPWARDS) * (JumpPower + BaseJumpHeightWallH) * ((CLAMP(lookPower, 0.0f, 1.5f) + 0.2f) * VerticalWallJumpMultiplier)	//sidewards vel
+		+ (UPWARDS * (CLAMP(lookPower, 0.0f, 1.5f) * LateralWallJumpMultiplier) * (JumpPower + BaseJumpHeightWallV)));
 
 	set_velocity(Vel); //kill me sorry I mean applies the speed
 	ChargeFlags -= lookPower * 10;
