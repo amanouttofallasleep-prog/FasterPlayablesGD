@@ -96,6 +96,10 @@ void Playables::_bind_methods()
 	BIND_PROP(Playables, Variant::FLOAT, BounceBufferTime);
 
 
+	BIND_PROP(Playables, Variant::FLOAT, JumpChargeIncrements);
+	BIND_PROP(Playables, Variant::FLOAT, DashChargeIncrements);
+
+
 	BIND_VIRTUAL_2(Playables, ScreenShake, FLOAT, intensity, FLOAT, time);
 
 	ClassDB::bind_method(D_METHOD("ClearChargeAction"), &Playables::ClearChargeAction);
@@ -252,8 +256,6 @@ void Playables::_bind_methods()
 	ClassDB::bind_method(D_METHOD("SetCoyoteTime", "newVal"), &Playables::SetCoyoteTime);
 	ClassDB::bind_method(D_METHOD("GetCoyoteTime"), &Playables::GetCoyoteTime);
 
-	ClassDB::bind_method(D_METHOD("SetChargeIncrements", "newVal"), &Playables::SetChargeIncrements);
-	ClassDB::bind_method(D_METHOD("GetChargeIncrements"), &Playables::GetChargeIncrements);
 
 	ClassDB::bind_method(D_METHOD("SetTiltTimeFactor", "newVal"), &Playables::SetTiltTimeFactor);
 	ClassDB::bind_method(D_METHOD("GetTiltTimeFactor"), &Playables::GetTiltTimeFactor);
@@ -330,7 +332,6 @@ void Playables::_bind_methods()
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "FOVVelCap"), "SetFOVVelCap", "GetFOVVelCap");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "WallTilt"), "SetWallTilt", "GetWallTilt");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "WalkTilt"), "SetWalkTilt", "GetWalkTilt");
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "ChargeIncrements"), "SetChargeIncrements", "GetChargeIncrements");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "TiltTimeFactor"), "SetTiltTimeFactor", "GetTiltTimeFactor");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "BobbingFactor"), "SetBobbingFactor", "GetBobbingFactor");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "maxFOVIncrease"), "SetMaxFOVIncrease", "GetMaxFOVIncrease");
@@ -1020,8 +1021,8 @@ void Playables::init()
 
 	JumpTimer->set_autostart(true); 
 
-	JumpTimer->set_wait_time(ChargeIncrements);
-	DashTimer->set_wait_time(ChargeIncrements);
+	JumpTimer->set_wait_time(JumpChargeIncrements);
+	DashTimer->set_wait_time(DashChargeIncrements);
 	InputBuffer->set_wait_time(BufferTime);
 	CoyoteBuffer->set_wait_time(CoyoteTime);
 	MaxDashTimer->set_wait_time(MaxDashTime);
@@ -1083,15 +1084,13 @@ void Playables::SetUpJumpTimer(bool isStart)
 		//JumpTimer->start();
 	//else
 	//	JumpTimer->stop();
-
 	//UtilityFunctions::print("JumpIn");
-
 }
 
 void Playables::SetUpDashTimer(bool isStart)
 {
 	if (isStart)
-		DashTimer->start();
+		DashTimer->start(DashChargeIncrements);
 	else
 		DashTimer->stop();
 
@@ -1520,7 +1519,7 @@ void Playables::OnGroundJump()
 {
 	Vector3 floorNorm = get_floor_normal().is_normalized() ? get_floor_normal() : UPWARDS;
 	float HoldTime = GetCharge(false) * 0.1f;												//(CustomMovementFlags & 15) * 0.1;
-	float lookPower = getForwardDir().normalized().dot(floorNorm);							//gets the dot product between the floor and the look direction of the cam. 
+	float lookPower = getForwardDir().normalized().dot(floorNorm.normalized());							//gets the dot product between the floor and the look direction of the cam. 
 	lookPower = CLAMP(CLAMP(lookPower, 0.0f, PitchJumpConstraint) * 1.5/PitchJumpConstraint, 0.0f, HoldTime); //maps the range between 0 and current hold time. 
 	Vector3 Vel = VEL();
 

@@ -213,8 +213,13 @@
 			//the rate at which you charge your jump decreasing this from 0.1 will change the mechanic
 			//above or equal to 0.1 your charge will be held at max when it reaches max
 			//lower your charge will not be held and you'll have a "misfire" which greatly screws up your input and actually makes you "trip"
-			float ChargeIncrements = 0.1;
-
+			BIND_GETSET(float, DashChargeIncrements, 0.1);
+			float JumpChargeIncrements = 0.5; float GetJumpChargeIncrements() {
+				return JumpChargeIncrements;
+			} void SetJumpChargeIncrements(float newVal) {
+				JumpTimer->set_wait_time(newVal); 
+				JumpChargeIncrements = newVal;
+			}
 			//How fast you want the camera to tilt on a wall or while walking
 			float TiltTimeFactor = 5; 
 
@@ -545,13 +550,6 @@
 
 			float GetCoyoteTime() { return CoyoteTime; }
 			void SetCoyoteTime(float newVal) { CoyoteTime = newVal; }
-
-			float GetChargeIncrements() { return ChargeIncrements; }
-			void SetChargeIncrements(float newVal) { 
-			ChargeIncrements = newVal; 
-			JumpTimer->set_wait_time(ChargeIncrements);
-			DashTimer->set_wait_time(ChargeIncrements);
-			}
 
 			float GetTiltTimeFactor() { return TiltTimeFactor; }
 			void SetTiltTimeFactor(float newVal) { TiltTimeFactor = newVal; }
